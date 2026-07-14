@@ -26,7 +26,7 @@ def stripe_webhook():
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'status': 'ok', 'note': str(e)}), 200
 
     supabase_url = os.environ.get('SUPABASE_URL', '')
     supabase_key = os.environ.get('SUPABASE_SERVICE_KEY', '')
