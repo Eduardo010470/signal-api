@@ -49,7 +49,7 @@ def stripe_webhook():
                 return jsonify({'status': 'ignored'}), 200
             email = session.get('customer_email') or session.get('customer_details', {}).get('email', '')
         except Exception as e:
-            return jsonify({'error': str(e)}), 400
+            return jsonify({'status': 'ok'}), 200
         customer_id = session.get('customer')
         subscription_id = session.get('subscription', '')
         try:
