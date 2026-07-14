@@ -9,7 +9,7 @@ CORS(app)
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({'status': 'ok'})
+    return jsonify({'status': 'ok'}), 200
 
 @app.route('/stripe-webhook', methods=['POST'])
 def stripe_webhook():
@@ -47,24 +47,29 @@ def stripe_webhook():
             return jsonify({'error': str(e)}), 400
         customer_id = session.get('customer')
         subscription_id = session.get('subscription', '')
-        if email:
-            req_lib.patch(
-                f'{supabase_url}/rest/v1/signal_users?email=eq.{email}',
-                headers=headers,
-                json={'is_premium': True, 'stripe_customer_id': customer_id}
-            )
-            req_lib.post(
-                f'{supabase_url}/rest/v1/signal_subscriptions',
-                headers={**headers, 'Prefer': 'resolution=merge-duplicates,return=minimal'},
-                json={
-                    'email': email,
-                    'stripe_customer_id': customer_id,
-                    'stripe_subscription_id': subscription_id,
-                    'status': 'active'
-                }
-            )
+        try:
+            if email:
+                req_lib.patch(
+                    f'{supabase_url}/rest/v1/signal_users?email=eq.{email}',
+                    headers=headers,
+                    json={'is_premium': True, 'stripe_customer_id': customer_id},
+                    timeout=10
+                )
+                req_lib.post(
+                    f'{supabase_url}/rest/v1/signal_subscriptions',
+                    headers={**headers, 'Prefer': 'resolution=merge-duplicates,return=minimal'},
+                    json={
+                        'email': email,
+                        'stripe_customer_id': customer_id,
+                        'stripe_subscription_id': subscription_id,
+                        'status': 'active'
+                    },
+                    timeout=10
+                )
+        except Exception as e:
+            print(f'Supabase error: {e}')
 
-    elif event['type'] == 'customer.subscription.deleted':
+    elif event_type == 'customer.subscription.deleted':
         subscription = event['data']['object']
         customer_id = subscription.get('customer')
         if customer_id:
@@ -79,7 +84,7 @@ def stripe_webhook():
                 json={'status': 'cancelled'}
             )
 
-    elif event['type'] == 'invoice.payment_failed':
+    elif event_type == 'invoice.payment_failed':
         invoice = event['data']['object']
         customer_id = invoice.get('customer')
         if customer_id:
@@ -89,7 +94,7 @@ def stripe_webhook():
                 json={'is_premium': False}
             )
 
-    return jsonify({'status': 'ok'})
+    return jsonify({'status': 'ok'}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
