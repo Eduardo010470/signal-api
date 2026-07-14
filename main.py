@@ -35,7 +35,7 @@ def stripe_webhook():
     try:
       event_type = event['type']
     except Exception as e:
-      return jsonify({'error': 'invalid event'}), 400
+      return jsonify({'status': 'ok'}), 200
 
     if event_type == 'checkout.session.completed':
         try:
