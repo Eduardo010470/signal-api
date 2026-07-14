@@ -32,7 +32,12 @@ def stripe_webhook():
         'Prefer': 'return=minimal'
     }
 
-    if event['type'] == 'checkout.session.completed':
+    try:
+      event_type = event['type']
+    except Exception as e:
+      return jsonify({'error': 'invalid event'}), 400
+
+    if event_type == 'checkout.session.completed':
         session = event['data']['object']
         email = session.get('customer_email') or session.get('customer_details', {}).get('email')
         customer_id = session.get('customer')
