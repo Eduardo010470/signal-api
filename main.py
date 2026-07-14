@@ -40,6 +40,8 @@ def stripe_webhook():
     if event_type == 'checkout.session.completed':
         try:
             session = event.get('data', {}).get('object', {})
+            if session.get('status') != 'complete':
+                return jsonify({'status': 'ignored'}), 200
             email = session.get('customer_email') or session.get('customer_details', {}).get('email', '')
         except Exception as e:
             return jsonify({'error': str(e)}), 400
