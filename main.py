@@ -11,10 +11,6 @@ CORS(app)
 def health():
     return jsonify({'status': 'ok'})
 
-@app.route('/health')
-def health():
-    return {'status': 'ok'}
-
 @app.route('/stripe-webhook', methods=['POST'])
 def stripe_webhook():
     payload = request.get_data()
