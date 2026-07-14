@@ -70,29 +70,23 @@ def stripe_webhook():
             print(f'Supabase error: {e}')
 
     elif event_type == 'customer.subscription.deleted':
-        subscription = event['data']['object']
-        customer_id = subscription.get('customer')
-        if customer_id:
-            req_lib.patch(
-                f'{supabase_url}/rest/v1/signal_users?stripe_customer_id=eq.{customer_id}',
-                headers=headers,
-                json={'is_premium': False}
-            )
-            req_lib.patch(
-                f'{supabase_url}/rest/v1/signal_subscriptions?stripe_customer_id=eq.{customer_id}',
-                headers=headers,
-                json={'status': 'cancelled'}
-            )
+        try:
+            subscription = event['data']['object']
+            customer_id = subscription.get('customer')
+            if customer_id:
+                req_lib.patch(f'{supabase_url}/rest/v1/signal_users?stripe_customer_id=eq.{customer_id}', headers=headers, json={'is_premium': False}, timeout=10)
+                req_lib.patch(f'{supabase_url}/rest/v1/signal_subscriptions?stripe_customer_id=eq.{customer_id}', headers=headers, json={'status': 'cancelled'}, timeout=10)
+        except Exception as e:
+            print(f'Error: {e}')
 
     elif event_type == 'invoice.payment_failed':
-        invoice = event['data']['object']
-        customer_id = invoice.get('customer')
-        if customer_id:
-            req_lib.patch(
-                f'{supabase_url}/rest/v1/signal_users?stripe_customer_id=eq.{customer_id}',
-                headers=headers,
-                json={'is_premium': False}
-            )
+        try:
+            invoice = event['data']['object']
+            customer_id = invoice.get('customer')
+            if customer_id:
+                req_lib.patch(f'{supabase_url}/rest/v1/signal_users?stripe_customer_id=eq.{customer_id}', headers=headers, json={'is_premium': False}, timeout=10)
+        except Exception as e:
+            print(f'Error: {e}')
 
     return jsonify({'status': 'ok'}), 200
 
