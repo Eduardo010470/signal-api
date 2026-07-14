@@ -13,7 +13,10 @@ def health():
 
 @app.route('/stripe-webhook', methods=['POST'])
 def stripe_webhook():
-    payload = request.get_data()
+    try:
+        payload = request.get_data()
+    except Exception:
+        return jsonify({'status': 'ok'}), 200
     sig_header = request.headers.get('Stripe-Signature')
     webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
     stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', '')
